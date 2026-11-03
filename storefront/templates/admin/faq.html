@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% block title %}FAQ{% endblock %}
+{% block content %}
+<h1>FAQ</h1>
+{% for f in faqs %}
+<form class="card" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ f.id }}">
+  <label>Question <input name="question" value="{{ f.question }}" maxlength="200" required></label>
+  <label>Answer <textarea name="answer" rows="3" maxlength="2000" required>{{ f.answer }}</textarea></label>
+  <div class="actions">
+    <label class="check"><input type="checkbox" name="visible" value="1" {{ 'checked' if f.visible }}> Show</label>
+    <label class="short inline-label">Order <input name="position" type="number" value="{{ f.position }}" class="num"></label>
+    <button class="btn btn-sm" name="action" value="save">Save</button>
+    <button class="linkish danger" name="action" value="delete" formnovalidate data-confirm-btn="Delete this question?">Delete</button>
+  </div>
+</form>
+{% endfor %}
+<form class="card" method="post">
+  <h2>Add a question</h2>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="visible" value="1">
+  <label>Question <input name="question" maxlength="200" required></label>
+  <label>Answer <textarea name="answer" rows="3" maxlength="2000" required></textarea></label>
+  <button class="btn btn-sm" name="action" value="add">+ Add</button>
+</form>
+{% endblock %}

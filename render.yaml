@@ -1,0 +1,51 @@
+# Render Blueprint: Dashboard -> New -> Blueprint -> pick this repo. One Blueprint = one client's store.
+# Database: a Neon Postgres project (or branch) per client. Paste both connection strings when Render asks:
+#   DATABASE_URL           pooled URL (host has "-pooler"): app traffic
+#   DATABASE_URL_UNPOOLED  direct URL: used only by `flask db upgrade`
+services:
+  - type: web
+    name: storefront
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: flask db upgrade && flask ensure-admin && gunicorn wsgi:app --workers 2 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.4
+      - key: FLASK_APP
+        value: wsgi.py
+      - key: STOREFRONT_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
+      - key: ADMIN_USERNAME
+        sync: false # the client's login name
+      - key: ADMIN_PASSWORD
+        sync: false # 10+ characters; the client can change it later under Account
+      - key: ALLOWED_HOSTS
+        sync: false # e.g. myshop.com,www.myshop.com,storefront-xyz.onrender.com
+      # Paystack (card + Mobile Money). Use the client's own secret key: sk_test_... to try it, sk_live_... to go live.
+      # In the Paystack dashboard set the webhook URL to https://<store-domain>/paystack/webhook
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      # Your support (superadmin) login: identical values in every store. Generate with `flask superadmin-setup`.
+      - key: SUPERADMIN_USERNAME
+        sync: false
+      - key: SUPERADMIN_PASSWORD_HASH
+        sync: false
+      - key: SUPERADMIN_TOTP_SECRET
+        sync: false
+      # Optional: email each enquiry to the owner (e.g. a Gmail app password or Brevo/Resend SMTP)
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false

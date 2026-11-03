@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ product.name or 'New product' }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin.products') }}">← All products</a></p>
+<h1>{{ product.name or 'New product' }}</h1>
+<form class="card" method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Name <input name="name" value="{{ product.name or '' }}" required maxlength="120"></label>
+  <div class="two">
+    <label>Price ({{ site.currency_symbol }}) <input name="price" inputmode="decimal" required value="{{ product.price_minor|minor_input }}"></label>
+    <label><span>Sale price <span class="muted">(optional)</span></span><input name="sale_price" inputmode="decimal" value="{{ product.sale_price_minor|minor_input }}"></label>
+  </div>
+  <div class="two">
+    <label>Category
+      <select name="category_id">
+        <option value="0">No category</option>
+        {% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if product.category_id == c.id }}>{{ c.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Sizes <input name="sizes" value="{{ product.sizes or '' }}" maxlength="200" placeholder="S, M, L, XL"></label>
+  </div>
+  <label>Description <textarea name="description" rows="5" maxlength="3000">{{ product.description or '' }}</textarea></label>
+  <div class="checks">
+    <label class="check"><input type="checkbox" name="visible" value="1" {{ 'checked' if product.visible or product.visible is none }}> Show on site</label>
+    <label class="check"><input type="checkbox" name="featured" value="1" {{ 'checked' if product.featured }}> Featured (shown first, “New” tag)</label>
+    <label class="check"><input type="checkbox" name="sold_out" value="1" {{ 'checked' if product.sold_out }}> Sold out</label>
+  </div>
+  <label class="short">Sort order <input name="position" type="number" value="{{ product.position or 0 }}"></label>
+  <div class="upload">
+    <p class="label">Add photos <span class="muted">(up to 10 at a time; the first photo is the cover)</span></p>
+    <input type="file" name="images" multiple accept="image/jpeg,image/png,image/webp,image/gif">
+  </div>
+  <div class="actions"><button class="btn" type="submit">Save product</button></div>
+</form>
+
+{% if product.id and product.images %}
+<h2>Photos</h2>
+<div class="photos">
+  {% for img in product.images %}
+  <figure>
+    <img src="{{ img.media.url }}" alt="">
+    <figcaption>
+      {% if not loop.first %}
+      <form method="post" action="{{ url_for('admin.product_image', pid=product.id, iid=img.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="first">
+        <button class="linkish" type="submit">Make cover</button>
+      </form>
+      {% else %}<span class="muted small">Cover</span>{% endif %}
+      <form method="post" action="{{ url_for('admin.product_image', pid=product.id, iid=img.id) }}" data-confirm="Delete this photo?">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete">
+        <button class="linkish danger" type="submit">Delete</button>
+      </form>
+    </figcaption>
+  </figure>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if product.id %}
+<form class="danger-zone" method="post" action="{{ url_for('admin.product_delete', pid=product.id) }}" data-confirm="Delete this product and its photos? This can't be undone.">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-danger" type="submit">Delete product</button>
+</form>
+{% endif %}
+{% endblock %}

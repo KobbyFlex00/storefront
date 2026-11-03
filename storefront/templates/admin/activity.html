@@ -1,0 +1,18 @@
+{% extends "admin/base.html" %}
+{% block title %}Security log{% endblock %}
+{% block content %}
+<h1>Security log</h1>
+<p class="muted">Sign-ins, failed attempts and changes made in this dashboard (latest 200).</p>
+<div class="table-wrap">
+<table>
+  <thead><tr><th>When (UTC)</th><th>User</th><th>Event</th><th>Detail</th><th>IP</th></tr></thead>
+  <tbody>
+  {% for a in items %}
+  <tr class="{{ 'warn' if 'failed' in a.action or 'locked' in a.action or 'limited' in a.action }}">
+    <td>{{ a.at.strftime('%d %b %H:%M') }}</td><td>{{ a.username }}</td><td>{{ a.action.replace('_', ' ') }}</td><td>{{ a.detail }}</td><td>{{ a.ip }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

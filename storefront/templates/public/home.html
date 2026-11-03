@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% macro icon(name) -%}
+<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+{%- if name == 'bag' %}<path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/>
+{%- elif name == 'menu' %}<path d="M4 7h16M4 12h16M4 17h16"/>
+{%- elif name == 'close' %}<path d="M6 6l12 12M18 6L6 18"/>
+{%- elif name == 'whatsapp' %}<path d="M4 20l1.3-3.9A8 8 0 1 1 8 19z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.5-2-1-1 .8a4 4 0 0 1-1.8-1.8l.8-1-1-2L9 9.5z"/>
+{%- elif name == 'instagram' %}<rect x="4" y="4" width="16" height="16" rx="4.5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".6" fill="currentColor"/>
+{%- elif name == 'tiktok' %}<path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 4c.5 2.5 2.2 4 4.5 4"/>
+{%- elif name == 'facebook' %}<path d="M14 8h2V4.5h-2.5A3.5 3.5 0 0 0 10 8v2.5H8V14h2v6h3.5v-6H16l.5-3.5h-3V8.7c0-.4.2-.7.5-.7z"/>
+{%- elif name == 'phone' %}<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1z"/>
+{%- elif name == 'mail' %}<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/>
+{%- elif name == 'arrow' %}<path d="M5 12h14M13 6l6 6-6 6"/>
+{%- endif %}</svg>
+{%- endmacro %}
+
+{% block body %}
+<header class="nav" id="top">
+  <a class="brand" href="#top">
+    {% if site.logo %}<img src="{{ site.logo }}" alt="{{ site.store_name }}">{% else %}{{ site.store_name }}{% endif %}
+  </a>
+  <nav class="nav-links" id="nav-links">
+    <a href="#shop">Shop</a>
+    {% if site.show_faq and faqs %}<a href="#faq">FAQ</a>{% endif %}
+    <a href="#order">Order</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <div class="nav-actions">
+    {% if site.enable_cart %}
+    <button class="icon-btn" id="cart-open" type="button" aria-label="Open bag">{{ icon('bag') }}<span class="badge" id="cart-count" hidden>0</span></button>
+    {% endif %}
+    <button class="icon-btn menu-toggle" id="menu-toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="nav-links">{{ icon('menu') }}</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-media">
+      {% if site.hero_video %}
+      <video autoplay muted loop playsinline {% if site.hero_image %}poster="{{ site.hero_image }}"{% endif %}>
+        <source src="{{ site.hero_video }}">
+      </video>
+      {% elif site.hero_image %}
+      <img src="{{ site.hero_image }}" alt="">
+      {% endif %}
+    </div>
+    <div class="hero-copy">
+      <p class="eyebrow">{{ site.hero_eyebrow }}</p>
+      <h1>{{ site.hero_title }}</h1>
+      <a class="btn btn-light" href="#shop">{{ site.hero_cta }} {{ icon('arrow') }}</a>
+    </div>
+  </section>
+
+  {% if site.show_intro %}
+  <section class="intro wrap">
+    {% if site.intro_image %}<img class="intro-img" src="{{ site.intro_image }}" alt="" loading="lazy">{% endif %}
+    <div>
+      <p class="eyebrow">{{ site.intro_kicker }}</p>
+      <h2>{{ site.intro_title }}</h2>
+      {% for para in site.intro_body.split('\n') if para.strip() %}<p>{{ para }}</p>{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="shop wrap" id="shop">
+    <div class="section-head">
+      <h2>{{ site.shop_title }}</h2>
+      <p>{{ site.shop_subtitle }}</p>
+    </div>
+    {% if categories|length > 1 %}
+    <div class="filters" role="tablist" aria-label="Filter products">
+      <button type="button" class="chip active" data-filter="">All</button>
+      {% for c in categories %}<button type="button" class="chip" data-filter="{{ c.slug }}">{{ c.name }}</button>{% endfor %}
+    </div>
+    {% endif %}
+    {% if products %}
+    <div class="grid" id="grid">
+      {% for p in products %}
+      <article class="card" data-category="{{ p.category.slug if p.category else '' }}">
+        <button type="button" class="card-btn" data-product="{{ p.id }}" aria-label="View {{ p.name }}">
+          <div class="card-img">
+            {% if p.images %}
+            <img src="{{ p.images[0].media.url }}" alt="{{ p.name }}" loading="lazy">
+            {% if p.images|length > 1 %}<img class="alt" src="{{ p.images[1].media.url }}" alt="" loading="lazy">{% endif %}
+            {% endif %}
+            {% if p.sold_out %}<span class="tag tag-dark">Sold out</span>
+            {% elif p.on_sale %}<span class="tag">Sale</span>
+            {% elif p.featured %}<span class="tag">New</span>{% endif %}
+          </div>
+          <div class="card-body">
+            <h3>{{ p.name }}</h3>
+            <p class="price">{{ site.money(p.current_price_minor) }}{% if p.on_sale %} <s>{{ site.money(p.price_minor) }}</s>{% endif %}</p>
+            {% if p.size_list %}<p class="sizes">{{ p.size_list|join(' · ') }}</p>{% endif %}
+          </div>
+        </button>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty">New pieces are coming soon.</p>
+    {% endif %}
+  </section>
+
+  {% if site.show_faq and faqs %}
+  <section class="faq wrap" id="faq">
+    <div class="section-head"><h2>{{ site.faq_title }}</h2></div>
+    {% for f in faqs %}
+    <details>
+      <summary>{{ f.question }}</summary>
+      {% for para in f.answer.split('\n') if para.strip() %}<p>{{ para }}</p>{% endfor %}
+    </details>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if site.show_cta %}
+  <section class="band">
+    <h2>{{ site.cta_title }}</h2>
+    <a class="btn btn-light" href="#order">{{ site.cta_button }} {{ icon('arrow') }}</a>
+  </section>
+  {% endif %}
+
+  <section class="order wrap" id="order">
+    <div>
+      <h2>{{ site.order_title }}</h2>
+      {% for para in site.order_body.split('\n') if para.strip() %}<p>{{ para }}</p>{% endfor %}
+      {% if site.whatsapp_link() %}
+      <a class="btn btn-wa" href="{{ site.whatsapp_link('Hi ' ~ site.store_name ~ '! I would like to place an order.') }}" target="_blank" rel="noopener noreferrer">{{ icon('whatsapp') }} Chat with us on WhatsApp</a>
+      {% endif %}
+    </div>
+    <form class="enquiry" method="post" action="{{ url_for('public.enquiry') }}">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}<p class="flash flash-{{ cat }}" role="status">{{ msg }}</p>{% endfor %}
+      {% endwith %}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="hp" aria-hidden="true">Website <input name="website" tabindex="-1" autocomplete="off"></label>
+      <label>Your name <input name="name" required maxlength="100" autocomplete="name"></label>
+      <div class="row">
+        <label>Phone <input name="phone" required maxlength="40" inputmode="tel" autocomplete="tel"></label>
+        <label><span>Email <span class="opt">(optional)</span></span><input name="email" type="email" maxlength="200" autocomplete="email"></label>
+      </div>
+      <label>What would you like to order? <textarea name="items" id="enquiry-items" required maxlength="2000" rows="4" placeholder="Item name, size, colour…"></textarea></label>
+      <label>Delivery location <input name="location" maxlength="200" autocomplete="address-level2"></label>
+      <button class="btn" type="submit">Send order enquiry {{ icon('arrow') }}</button>
+    </form>
+  </section>
+</main>
+
+<footer class="footer" id="contact">
+  <div class="wrap footer-grid">
+    <div>
+      <p class="footer-brand">{{ site.store_name }}</p>
+      <p>{{ site.footer_tagline }}</p>
+      {% if site.location %}<p class="muted">{{ site.location }}</p>{% endif %}
+    </div>
+    <div>
+      <p class="footer-h">Explore</p>
+      <a href="#shop">Shop</a><a href="#order">Order</a>{% if site.show_faq and faqs %}<a href="#faq">FAQ</a>{% endif %}
+    </div>
+    <div>
+      <p class="footer-h">Connect</p>
+      {% if site.phone %}<a href="tel:{{ site.phone|replace(' ', '') }}">{{ icon('phone') }} {{ site.phone }}</a>{% endif %}
+      {% if site.whatsapp_link() %}<a href="{{ site.whatsapp_link() }}" target="_blank" rel="noopener noreferrer">{{ icon('whatsapp') }} WhatsApp</a>{% endif %}
+      {% if site.email %}<a href="mailto:{{ site.email }}">{{ icon('mail') }} {{ site.email }}</a>{% endif %}
+      <div class="socials">
+        {% if site.instagram %}<a href="{{ site.instagram }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram">{{ icon('instagram') }}</a>{% endif %}
+        {% if site.tiktok %}<a href="{{ site.tiktok }}" target="_blank" rel="noopener noreferrer" aria-label="TikTok">{{ icon('tiktok') }}</a>{% endif %}
+        {% if site.facebook %}<a href="{{ site.facebook }}" target="_blank" rel="noopener noreferrer" aria-label="Facebook">{{ icon('facebook') }}</a>{% endif %}
+      </div>
+    </div>
+  </div>
+  <p class="copy">© {{ now_year }} {{ site.store_name }}</p>
+</footer>
+
+<dialog class="quick" id="quick" aria-labelledby="quick-name">
+  <button class="icon-btn close" type="button" data-close aria-label="Close">{{ icon('close') }}</button>
+  <div class="quick-grid">
+    <div class="quick-media"><img id="quick-img" alt=""><div class="thumbs" id="quick-thumbs"></div></div>
+    <div class="quick-info">
+      <h3 id="quick-name"></h3>
+      <p class="price"><span id="quick-price"></span> <s id="quick-was"></s></p>
+      <p id="quick-desc" class="desc"></p>
+      <div id="quick-sizes" class="size-pick" role="radiogroup" aria-label="Size"></div>
+      <div class="qty-row">
+        <label>Qty <input id="quick-qty" type="number" min="1" max="20" value="1"></label>
+      </div>
+      <p class="hint" id="quick-hint" role="alert"></p>
+      {% if site.enable_cart %}
+      <button class="btn" type="button" id="quick-add">Add to bag</button>
+      {% endif %}
+      <a class="btn btn-outline" id="quick-ask" href="#order">Ask about this piece</a>
+    </div>
+  </div>
+</dialog>
+
+{% if site.enable_cart %}
+<dialog class="drawer" id="cart" aria-labelledby="cart-title">
+  <div class="drawer-head"><h3 id="cart-title">Your bag</h3><button class="icon-btn" type="button" data-close aria-label="Close">{{ icon('close') }}</button></div>
+  <ul class="cart-lines" id="cart-lines"></ul>
+  <p class="empty" id="cart-empty">Your bag is empty.</p>
+  <div class="drawer-foot" id="cart-foot">
+    <p class="total">Total <span id="cart-total"></span></p>
+    <label><span>Delivery location <span class="opt">(optional)</span></span><input id="cart-location" maxlength="120"></label>
+    {% if paystack_ready(site) %}
+    <div class="pay-form" id="pay-form">
+      <div class="row2">
+        <label>Name <input id="pay-name" maxlength="100" autocomplete="name"></label>
+        <label>Phone <input id="pay-phone" maxlength="40" inputmode="tel" autocomplete="tel"></label>
+      </div>
+      <label><span>Email <span class="opt">(for your receipt)</span></span><input id="pay-email" type="email" maxlength="200" autocomplete="email"></label>
+      <p class="hint" id="pay-hint" role="alert"></p>
+      <button class="btn" type="button" id="pay-now">Pay now · card or Mobile Money</button>
+      <p class="muted small">{{ site.paystack_note }}</p>
+    </div>
+    <p class="or">or</p>
+    {% endif %}
+    <button class="btn btn-wa" type="button" id="cart-send">{{ icon('whatsapp') }} Send order on WhatsApp</button>
+    <p class="muted small">We'll confirm availability, delivery and payment with you on WhatsApp.</p>
+  </div>
+</dialog>
+{% endif %}
+
+<script type="application/json" id="store-data" nonce="{{ csp_nonce }}">{{ {
+  "products": product_data,
+  "currency": currency_symbol,
+  "store": site.store_name,
+  "whatsapp": site.raw('whatsapp'),
+  "cart": site.enable_cart,
+  "paystack": paystack_ready(site),
+  "checkoutUrl": url_for('payments.checkout'),
+  "csrf": csrf_token()
+}|tojson }}</script>
+<script src="{{ url_for('static', filename='js/site.js') }}" nonce="{{ csp_nonce }}" defer></script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Your order · {{ site.store_name }}{% endblock %}
+{% block body %}
+<main class="error-page order-done" data-clear-bag="{{ '1' if order.status == 'paid' else '' }}">
+  {% if order.status == 'paid' %}
+    <p class="eyebrow">Payment received</p>
+    <h1>Thank you, {{ order.name.split(' ')[0] }}!</h1>
+    <p>Your order <strong>{{ order.reference }}</strong> is confirmed. We'll contact you on {{ order.phone }} about delivery.</p>
+  {% elif order.status == 'failed' %}
+    <p class="eyebrow">Payment not completed</p>
+    <h1>Your payment didn't go through</h1>
+    <p>You haven't been charged. You can try again or order with us on WhatsApp.</p>
+  {% else %}
+    <p class="eyebrow">Almost there</p>
+    <h1>We're confirming your payment</h1>
+    <p>This usually takes a few seconds. Refresh this page, or message us with reference <strong>{{ order.reference }}</strong>.</p>
+  {% endif %}
+  <ul class="done-items">{% for i in order.items %}<li>{{ i.name }}{% if i.size %} ({{ i.size }}){% endif %} × {{ i.qty }} <span>{{ site.money(i.total) }}</span></li>{% endfor %}
+    <li class="done-total">Total <span>{{ site.money(order.amount_minor) }}</span></li></ul>
+  <p><a class="btn" href="{{ url_for('public.home') }}">Back to the shop</a>
+  {% if order.status != 'paid' and site.whatsapp_link() %} <a class="btn btn-wa" href="{{ site.whatsapp_link('Hi! About my order ' ~ order.reference) }}" target="_blank" rel="noopener noreferrer">WhatsApp us</a>{% endif %}</p>
+</main>
+<script src="{{ url_for('static', filename='js/order-done.js') }}" nonce="{{ csp_nonce }}" defer></script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+{% block title %}Support{% endblock %}
+{% block content %}
+<h1>Support</h1>
+<p class="muted">Only you (the support account) can see this page. Everything done here is recorded in the security log, which the store owner can read.</p>
+
+{% if temp_password %}
+<div class="card temp">
+  <p><strong>Temporary password for {{ temp_for }}</strong>. It's shown once only. Send it privately and ask them to change it under Account.</p>
+  <code class="secret">{{ temp_password }}</code>
+</div>
+{% endif %}
+
+<h2>Store health</h2>
+<div class="table-wrap">
+<table>
+  <tbody>
+  {% for k, v in diag.items() %}<tr class="{{ 'warn' if v in ('NO', 'OFF') or 'set ALLOWED_HOSTS' in v|string }}"><th>{{ k }}</th><td>{{ v }}</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Store owner logins</h2>
+{% for u in owners %}
+<div class="card row-form">
+  <div>
+    <strong>{{ u.username }}</strong>
+    <span class="muted small">
+      {% if u.locked_until and u.locked_until > now %}· <span class="danger">locked until {{ u.locked_until.strftime('%H:%M') }} UTC</span>{% endif %}
+      · last sign-in {{ u.last_login_at.strftime('%d %b %Y %H:%M') if u.last_login_at else 'never' }}
+    </span>
+  </div>
+  <div class="actions">
+    <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ u.id }}">
+      <button class="btn btn-sm btn-ghost" name="action" value="unlock">Unlock</button></form>
+    <form method="post" data-confirm="Reset {{ u.username }}'s password? They'll be signed out everywhere.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ u.id }}">
+      <button class="btn btn-sm" name="action" value="reset">Reset password</button></form>
+  </div>
+</div>
+{% endfor %}
+<form class="card inline" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input name="username" placeholder="New owner username" maxlength="80" required aria-label="New owner username">
+  <button class="btn btn-sm" name="action" value="add">+ Add owner login</button>
+</form>
+{% endblock %}

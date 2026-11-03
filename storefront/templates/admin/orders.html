@@ -1,0 +1,34 @@
+{% extends "admin/base.html" %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<h1>Online orders</h1>
+{% if not paystack_on %}<p class="flash flash-warning">Online payments are off. Ask your developer to add your Paystack key, then switch them on under Look &amp; content → Payments.</p>{% endif %}
+<nav class="tabs">
+  <a href="{{ url_for('admin.orders', show='paid') }}" class="{{ 'on' if show == 'paid' }}">To send</a>
+  <a href="{{ url_for('admin.orders', show='done') }}" class="{{ 'on' if show == 'done' }}">Sent</a>
+  <a href="{{ url_for('admin.orders', show='all') }}" class="{{ 'on' if show == 'all' }}">All (incl. unpaid)</a>
+</nav>
+{% for o in orders %}
+<div class="card enq {{ 'done' if o.fulfilled }}">
+  <div class="head-row">
+    <strong>{{ o.name }} · {{ site.money(o.amount_minor) }}</strong>
+    <span class="pill {{ 'accent' if o.status == 'paid' else ('dark' if o.status == 'failed' else '') }}">{{ o.status }}{% if o.channel %} · {{ o.channel.replace('_', ' ') }}{% endif %}</span>
+  </div>
+  <p class="small muted">{{ o.reference }} · {{ o.created_at.strftime('%d %b %Y, %H:%M') }} UTC</p>
+  <p class="small">{{ o.phone }} · {{ o.email }}{% if o.location %} · {{ o.location }}{% endif %}</p>
+  <ul class="small">{% for i in o.items %}<li>{{ i.name }}{% if i.size %} ({{ i.size }}){% endif %} × {{ i.qty }}: {{ site.money(i.total) }}</li>{% endfor %}</ul>
+  {% if o.status == 'paid' %}
+  <div class="actions">
+    {% set digits = o.phone|select('in', '0123456789')|join %}
+    {% if digits %}<a class="btn btn-sm btn-wa" href="https://wa.me/{{ digits }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>{% endif %}
+    <form method="post" action="{{ url_for('admin.order_update', oid=o.id, show=show) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-ghost" name="action" value="fulfil">{{ 'Mark not sent' if o.fulfilled else 'Mark as sent' }}</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% else %}
+<p class="muted">No orders here yet.</p>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% block title %}Products{% endblock %}
+{% block content %}
+<div class="head-row"><h1>Products</h1><a class="btn" href="{{ url_for('admin.product_edit') }}">+ Add product</a></div>
+{% if products %}
+<ul class="plist">
+  {% for p in products %}
+  <li>
+    <a href="{{ url_for('admin.product_edit', pid=p.id) }}">
+      {% if p.images %}<img src="{{ p.images[0].media.url }}" alt="">{% else %}<span class="noimg"></span>{% endif %}
+      <span class="pname">{{ p.name }}<small>{{ p.category.name if p.category else 'No category' }} · {{ site.money(p.current_price_minor) }}</small></span>
+      <span class="pills">
+        {% if not p.visible %}<span class="pill">Hidden</span>{% endif %}
+        {% if p.sold_out %}<span class="pill dark">Sold out</span>{% endif %}
+        {% if p.featured %}<span class="pill accent">Featured</span>{% endif %}
+      </span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted">No products yet. Add your first one.</p>{% endif %}
+{% endblock %}

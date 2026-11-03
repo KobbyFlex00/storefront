@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Dashboard{% endblock %} · {{ site.store_name }}</title>
+  {% if site.favicon %}<link rel="icon" href="{{ site.favicon }}">{% endif %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+{% if current_user.is_authenticated %}
+<header class="top">
+  <a class="logo" href="{{ url_for('admin.home') }}">{{ site.store_name }} <span>{{ 'Support mode' if current_user.is_super else 'Admin' }}</span></a>
+  <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="side">Menu</button>
+</header>
+<div class="layout">
+  <nav class="side" id="side">
+    {% set ep = request.endpoint or '' %}
+    <a href="{{ url_for('admin.home') }}" class="{{ 'on' if ep == 'admin.home' }}">Dashboard</a>
+    <a href="{{ url_for('admin.products') }}" class="{{ 'on' if ep.startswith('admin.product') }}">Products</a>
+    <a href="{{ url_for('admin.categories') }}" class="{{ 'on' if ep == 'admin.categories' }}">Categories</a>
+    <a href="{{ url_for('admin.settings', group='brand') }}" class="{{ 'on' if ep.startswith('admin.settings') }}">Look &amp; content</a>
+    <a href="{{ url_for('admin.faq') }}" class="{{ 'on' if ep == 'admin.faq' }}">FAQ</a>
+    <a href="{{ url_for('admin.orders') }}" class="{{ 'on' if ep == 'admin.orders' }}">Orders</a>
+    <a href="{{ url_for('admin.enquiries') }}" class="{{ 'on' if ep == 'admin.enquiries' }}">Enquiries</a>
+    <a href="{{ url_for('admin.activity') }}" class="{{ 'on' if ep == 'admin.activity' }}">Security log</a>
+    <a href="{{ url_for('auth.account') }}" class="{{ 'on' if ep == 'auth.account' }}">Account</a>
+    {% if current_user.is_super %}<a href="{{ url_for('admin.support') }}" class="support-link {{ 'on' if ep == 'admin.support' }}">Support tools</a>{% endif %}
+    <a href="{{ url_for('public.home') }}" target="_blank" rel="noopener">View site ↗</a>
+    <form method="post" action="{{ url_for('auth.logout') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="linkish">Sign out</button>
+    </form>
+  </nav>
+  <main class="main">
+{% else %}
+<div class="layout solo"><main class="main">
+{% endif %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}<p class="flash flash-{{ cat }}" role="status">{{ msg }}</p>{% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script src="{{ url_for('static', filename='js/admin.js') }}" nonce="{{ csp_nonce }}" defer></script>
+</body>
+</html>

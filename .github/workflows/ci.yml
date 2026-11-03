@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1" # weekly: catch newly published vulnerabilities in dependencies
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: storefront
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - run: pytest -q
+      - name: Dependency vulnerability scan
+        run: pip-audit -r requirements.txt
+      - name: Migrations and demo data work on Postgres
+        env:
+          FLASK_APP: wsgi.py
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/storefront
+          ADMIN_USERNAME: owner
+          ADMIN_PASSWORD: ci-only-long-password
+        run: |
+          flask db upgrade
+          flask ensure-admin
+          flask seed-demo
