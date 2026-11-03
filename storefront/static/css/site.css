@@ -184,3 +184,13 @@ dialog::backdrop { background: rgba(20, 14, 12, .55); backdrop-filter: blur(3px)
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* order confirmation */
+.order-done { max-width: 560px; margin: 0 auto; }
+.done-items { list-style: none; padding: 0; margin: 8px 0 24px; text-align: left; }
+.done-items li { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, var(--primary) 12%, transparent); }
+.done-total { font-weight: 700; }
+/* checkout */
+.pay-form { display: grid; gap: 10px; }
+.pay-form .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.or { text-align: center; font-size: .8rem; opacity: .6; margin: 0; }

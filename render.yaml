@@ -29,6 +29,17 @@ services:
         sync: false # 10+ characters; the client can change it later under Account
       - key: ALLOWED_HOSTS
         sync: false # e.g. myshop.com,www.myshop.com,storefront-xyz.onrender.com
+      # Paystack (card + Mobile Money). Use the client's own secret key: sk_test_... to try it, sk_live_... to go live.
+      # In the Paystack dashboard set the webhook URL to https://<store-domain>/paystack/webhook
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      # Your support (superadmin) login: identical values in every store. Generate with `flask superadmin-setup`.
+      - key: SUPERADMIN_USERNAME
+        sync: false
+      - key: SUPERADMIN_PASSWORD_HASH
+        sync: false
+      - key: SUPERADMIN_TOTP_SECRET
+        sync: false
       # Optional: email each enquiry to the owner (e.g. a Gmail app password or Brevo/Resend SMTP)
       - key: SMTP_HOST
         sync: false

@@ -41,6 +41,7 @@ def create_app(config_overrides: dict | None = None) -> Flask:
     from .auth import bp as auth_bp
     from .cli import register_cli
     from .media import bp as media_bp
+    from .payments import bp as payments_bp
     from .public.routes import bp as public_bp
     from .security import init_security
     from .site import get_site
@@ -48,6 +49,7 @@ def create_app(config_overrides: dict | None = None) -> Flask:
     init_security(app)
     app.register_blueprint(public_bp)
     app.register_blueprint(media_bp)
+    app.register_blueprint(payments_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     register_cli(app)
@@ -56,7 +58,9 @@ def create_app(config_overrides: dict | None = None) -> Flask:
     def _site():
         from datetime import date
 
-        return {"site": get_site(), "now_year": date.today().year}
+        from .payments import paystack_ready
+
+        return {"site": get_site(), "now_year": date.today().year, "paystack_ready": paystack_ready}
 
     @app.template_filter("minor_input")
     def _minor_input(minor):

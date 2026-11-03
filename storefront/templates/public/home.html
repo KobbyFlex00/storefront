@@ -201,6 +201,19 @@
   <div class="drawer-foot" id="cart-foot">
     <p class="total">Total <span id="cart-total"></span></p>
     <label><span>Delivery location <span class="opt">(optional)</span></span><input id="cart-location" maxlength="120"></label>
+    {% if paystack_ready(site) %}
+    <div class="pay-form" id="pay-form">
+      <div class="row2">
+        <label>Name <input id="pay-name" maxlength="100" autocomplete="name"></label>
+        <label>Phone <input id="pay-phone" maxlength="40" inputmode="tel" autocomplete="tel"></label>
+      </div>
+      <label><span>Email <span class="opt">(for your receipt)</span></span><input id="pay-email" type="email" maxlength="200" autocomplete="email"></label>
+      <p class="hint" id="pay-hint" role="alert"></p>
+      <button class="btn" type="button" id="pay-now">Pay now · card or Mobile Money</button>
+      <p class="muted small">{{ site.paystack_note }}</p>
+    </div>
+    <p class="or">or</p>
+    {% endif %}
     <button class="btn btn-wa" type="button" id="cart-send">{{ icon('whatsapp') }} Send order on WhatsApp</button>
     <p class="muted small">We'll confirm availability, delivery and payment with you on WhatsApp.</p>
   </div>
@@ -212,7 +225,10 @@
   "currency": currency_symbol,
   "store": site.store_name,
   "whatsapp": site.raw('whatsapp'),
-  "cart": site.enable_cart
+  "cart": site.enable_cart,
+  "paystack": paystack_ready(site),
+  "checkoutUrl": url_for('payments.checkout'),
+  "csrf": csrf_token()
 }|tojson }}</script>
 <script src="{{ url_for('static', filename='js/site.js') }}" nonce="{{ csp_nonce }}" defer></script>
 {% endblock %}

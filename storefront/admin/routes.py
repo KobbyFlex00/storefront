@@ -1,12 +1,16 @@
+import os
+import platform
 import re
+import secrets
 from decimal import Decimal, InvalidOperation
+from functools import wraps
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
+from flask import Blueprint, abort, current_app, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 
 from ..extensions import db
 from ..media import UploadError, save_image, save_video
-from ..models import FAQ, AuditLog, Category, Enquiry, Media, Product, ProductImage
+from ..models import FAQ, AdminUser, AuditLog, Category, Enquiry, Media, Order, Product, ProductImage, utcnow
 from ..security import audit
 from ..settings_schema import GROUPS, clean
 from ..site import get_site, save_settings
@@ -64,6 +68,7 @@ def home():
         "visible": Product.query.filter_by(visible=True).count(),
         "new_enquiries": Enquiry.query.filter_by(handled=False).count(),
         "categories": Category.query.count(),
+        "orders_to_send": Order.query.filter_by(status="paid", fulfilled=False).count(),
     }
     recent = Enquiry.query.order_by(Enquiry.created_at.desc()).limit(5).all()
     return render_template("admin/home.html", stats=stats, recent=recent)
@@ -315,3 +320,104 @@ def enquiry_update(eid):
 def activity():
     items = AuditLog.query.order_by(AuditLog.at.desc()).limit(200).all()
     return render_template("admin/activity.html", items=items, me=current_user)
+
+
+# ---------------------------------------------------------------- orders (Paystack)
+
+
+@bp.route("/orders")
+def orders():
+    show = request.args.get("show", "paid")
+    q = Order.query
+    if show == "paid":
+        q = q.filter_by(status="paid", fulfilled=False)
+    elif show == "done":
+        q = q.filter_by(status="paid", fulfilled=True)
+    items = q.order_by(Order.created_at.desc()).limit(300).all()
+    return render_template("admin/orders.html", orders=items, show=show, site=get_site(),
+                           paystack_on=bool(current_app.config["PAYSTACK_SECRET_KEY"]))
+
+
+@bp.route("/orders/<int:oid>", methods=["POST"])
+def order_update(oid):
+    order = db.get_or_404(Order, oid)
+    if request.form.get("action") == "fulfil" and order.status == "paid":
+        order.fulfilled = not order.fulfilled
+        db.session.commit()
+        audit("order_fulfilled" if order.fulfilled else "order_unfulfilled", order.reference)
+    return redirect(url_for("admin.orders", show=request.args.get("show", "paid")))
+
+
+# ---------------------------------------------------------------- support (superadmin only)
+
+
+def super_required(view):
+    @wraps(view)
+    def wrapper(*args, **kwargs):
+        if not current_user.is_super:
+            audit("support_page_denied", request.path)
+            abort(403)
+        return view(*args, **kwargs)
+
+    return wrapper
+
+
+def _diagnostics() -> dict:
+    cfg = current_app.config
+    key = cfg["PAYSTACK_SECRET_KEY"]
+    media_bytes = db.session.query(db.func.coalesce(db.func.sum(Media.size), 0)).scalar()
+    return {
+        "Version (git commit)": (os.environ.get("RENDER_GIT_COMMIT") or "unknown")[:12],
+        "Python": platform.python_version(),
+        "Database": db.engine.dialect.name,
+        "Production mode": "yes" if cfg["PRODUCTION"] else "NO",
+        "Allowed hosts": ", ".join(cfg["ALLOWED_HOSTS"]) or "any (set ALLOWED_HOSTS)",
+        "Support 2FA": "on" if cfg["SUPERADMIN_TOTP_SECRET"] else "OFF",
+        "Email (SMTP)": cfg["SMTP_HOST"] or "not configured",
+        "Paystack": ("live" if key.startswith("sk_live_") else "test" if key.startswith("sk_test_") else "set")
+        if key else "not configured",
+        "Products": Product.query.count(),
+        "Media files": f"{Media.query.count()} ({media_bytes / 1_048_576:.1f} MB)",
+        "Orders paid / pending / failed": " / ".join(
+            str(Order.query.filter_by(status=s).count()) for s in ("paid", "pending", "failed")),
+        "Enquiries (new)": Enquiry.query.filter_by(handled=False).count(),
+    }
+
+
+@bp.route("/support", methods=["GET", "POST"])
+@super_required
+def support():
+    temp_password, temp_for = None, None
+    if request.method == "POST":
+        action = request.form.get("action")
+        uid = _int(request.form.get("id"), 0)
+        if action in ("unlock", "reset") and uid:
+            user = db.get_or_404(AdminUser, uid)
+            if user.is_super:
+                abort(400)
+            user.failed_logins, user.locked_until = 0, None
+            if action == "reset":
+                temp_password = secrets.token_urlsafe(12)
+                user.set_password(temp_password)  # also signs the owner out everywhere
+                temp_for = user.username
+            db.session.commit()
+            audit("support_" + action, user.username)
+            if action == "unlock":
+                flash(f"{user.username} is unlocked.", "success")
+        elif action == "add":
+            username = request.form.get("username", "").strip()[:80]
+            if not re.fullmatch(r"[A-Za-z0-9_.@-]{3,80}", username):
+                flash("Usernames are 3+ letters, numbers, dots, dashes or underscores.", "danger")
+            elif AdminUser.query.filter_by(username=username).first():
+                flash("That username is taken.", "danger")
+            else:
+                temp_password = secrets.token_urlsafe(12)
+                user = AdminUser(username=username, role="owner")
+                user.set_password(temp_password)
+                db.session.add(user)
+                db.session.commit()
+                temp_for = username
+                audit("support_add_owner", username)
+    owners = AdminUser.query.filter_by(role="owner").order_by(AdminUser.username).all()
+    return render_template("admin/support.html", owners=owners, diag=_diagnostics(), temp_password=temp_password,
+                           temp_for=temp_for, now=utcnow())

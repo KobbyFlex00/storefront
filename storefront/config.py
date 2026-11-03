@@ -49,5 +49,15 @@ class Config:
     SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
     SMTP_FROM = os.environ.get("SMTP_FROM", "").strip()
 
+    # Superadmin ("support") login: the same three values go into every client store, so one login
+    # (protected by an authenticator app) works everywhere. Generate them with `flask superadmin-setup`.
+    SUPERADMIN_USERNAME = os.environ.get("SUPERADMIN_USERNAME", "").strip()
+    SUPERADMIN_PASSWORD_HASH = os.environ.get("SUPERADMIN_PASSWORD_HASH", "").strip()
+    SUPERADMIN_TOTP_SECRET = os.environ.get("SUPERADMIN_TOTP_SECRET", "").strip()
+
+    # Paystack (card + Mobile Money). The secret key never leaves the server.
+    PAYSTACK_SECRET_KEY = os.environ.get("PAYSTACK_SECRET_KEY", "").strip()
+    PAYSTACK_API = "https://api.paystack.co"
+
     # Comma-separated list of hostnames the site answers on (blocks Host-header attacks). Empty = any.
     ALLOWED_HOSTS = [h.strip().lower() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]

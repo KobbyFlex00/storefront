@@ -6,8 +6,10 @@ import random
 
 import click
 from PIL import Image, ImageDraw, ImageFilter
+from werkzeug.security import generate_password_hash
 
-from .auth import password_problem
+from . import totp
+from .auth import password_problem, sync_superadmin
 from .extensions import db
 from .models import FAQ, AdminUser, Category, Media, Product, ProductImage, Setting
 from .settings_schema import FIELDS
@@ -20,7 +22,11 @@ def register_cli(app):
         """Create the store owner's login from ADMIN_USERNAME / ADMIN_PASSWORD."""
         username = os.environ.get("ADMIN_USERNAME", "admin").strip()
         password = os.environ.get("ADMIN_PASSWORD", "")
-        user = AdminUser.query.filter_by(username=username).first()
+        try:
+            click.echo(sync_superadmin())
+        except ValueError as exc:
+            raise click.ClickException(str(exc)) from exc
+        user = AdminUser.query.filter_by(username=username, role="owner").first()
         if user and not reset:
             click.echo(f"Admin '{username}' already exists.")
             return
@@ -33,6 +39,25 @@ def register_cli(app):
         user.failed_logins, user.locked_until = 0, None
         db.session.commit()
         click.echo(f"Admin '{username}' is ready.")
+
+    @app.cli.command("superadmin-setup")
+    @click.option("--username", prompt="Support username", default="support")
+    def superadmin_setup(username):
+        """Make the SUPERADMIN_* values to paste into every client store (run once, on your own machine)."""
+        password = click.prompt("Support password (16+ characters)", hide_input=True, confirmation_prompt=True)
+        if len(password) < 16:
+            raise click.ClickException("Use at least 16 characters: this login opens every store.")
+        if problem := password_problem(password, username):
+            raise click.ClickException(problem)
+        secret = totp.new_secret()
+        click.echo("\nAdd these to EVERY store's environment (Render -> Environment):\n")
+        click.echo(f"SUPERADMIN_USERNAME={username}")
+        click.echo(f"SUPERADMIN_PASSWORD_HASH={generate_password_hash(password, method='scrypt')}")
+        click.echo(f"SUPERADMIN_TOTP_SECRET={secret}")
+        click.echo("\nThen add the 2FA secret to your authenticator app (Google Authenticator, Authy, 1Password):")
+        click.echo(f"  Setup key: {secret}")
+        click.echo(f"  Or open/scan: {totp.provisioning_uri(secret, username)}")
+        click.echo("\nKeep these private. To revoke support access to a store, delete the three variables there.")
 
     @app.cli.command("seed-demo")
     @click.option("--force", is_flag=True, help="Add demo products even if the store already has some.")

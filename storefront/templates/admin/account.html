@@ -2,6 +2,9 @@
 {% block title %}Account{% endblock %}
 {% block content %}
 <h1>Account</h1>
+{% if current_user.is_super %}
+<div class="card narrow"><p>You're signed in with the <strong>support account</strong>. Its password and 2FA are set with environment variables on the server (see <code>flask superadmin-setup</code>).</p></div>
+{% else %}
 <form class="card narrow" method="post">
   <p>Signed in as <strong>{{ current_user.username }}</strong>.</p>
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -11,4 +14,11 @@
   <p class="muted small">At least 10 characters. A short sentence is easy to remember and hard to guess.</p>
   <button class="btn" type="submit">Change password</button>
 </form>
+{% endif %}
+{% if support and not current_user.is_super %}
+<div class="card narrow">
+  <h2>Support access</h2>
+  <p class="small">Your developer can sign in as <strong>{{ support|map(attribute='username')|join(', ') }}</strong> to fix technical issues. Their logins and changes appear in the <a href="{{ url_for('admin.activity') }}">security log</a>.</p>
+</div>
+{% endif %}
 {% endblock %}

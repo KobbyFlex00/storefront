@@ -2,6 +2,7 @@
 {% block content %}
 <h1>Welcome back</h1>
 <div class="stats">
+  <a class="stat" href="{{ url_for('admin.orders') }}"><span>{{ stats.orders_to_send }}</span>Paid orders to send</a>
   <a class="stat" href="{{ url_for('admin.enquiries') }}"><span>{{ stats.new_enquiries }}</span>New enquiries</a>
   <a class="stat" href="{{ url_for('admin.products') }}"><span>{{ stats.visible }}</span>Products live</a>
   <a class="stat" href="{{ url_for('admin.products') }}"><span>{{ stats.products }}</span>Products total</a>

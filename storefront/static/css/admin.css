@@ -100,3 +100,8 @@ table { border-collapse: collapse; width: 100%; font-size: .85rem; }
 th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td:nth-child(4) { white-space: normal; }
 tr.warn td { color: var(--bad); }
+.support-link { color: var(--accent); font-weight: 600; }
+.temp { border-color: var(--accent); }
+.secret { font: 600 1.2rem ui-monospace, monospace; padding: 10px 14px; background: var(--bg); border-radius: 8px; user-select: all; overflow-wrap: anywhere; }
+th { font-weight: 600; }
+.layout:not(.solo) .narrow { margin: 0 0 16px; }

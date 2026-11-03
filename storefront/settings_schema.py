@@ -76,6 +76,13 @@ GROUPS: list[tuple[str, str, list[F]]] = [
         F("shop_subtitle", "Subtitle", default="Selected sizes in stock. Some pieces made to order.", max_len=160),
         F("enable_cart", "Let customers build a cart and send it on WhatsApp", "bool", default="1"),
     ]),
+    ("payments", "Payments", [
+        F("enable_paystack", "Accept card & Mobile Money with Paystack", "bool", default="1",
+          help="Works when PAYSTACK_SECRET_KEY is set on the server and the currency is GHS, NGN, KES, ZAR or USD. "
+               "WhatsApp ordering stays available either way."),
+        F("paystack_note", "Note under the Pay button", max_len=160,
+          default="Secure payment by Paystack: card or Mobile Money."),
+    ]),
     ("faq", "FAQ", [
         F("show_faq", "Show this section", "bool", default="1"),
         F("faq_title", "Section title", default="Good to know", max_len=60),

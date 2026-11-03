@@ -238,5 +238,45 @@
     window.open(url, "_blank", "noopener");
   });
 
+  // ---------------------------------------------------------------- Paystack
+  const payBtn = $("#pay-now");
+  if (data.paystack && payBtn) {
+    payBtn.addEventListener("click", async () => {
+      const hint = $("#pay-hint");
+      const body = {
+        name: $("#pay-name").value.trim(),
+        phone: $("#pay-phone").value.trim(),
+        email: $("#pay-email").value.trim(),
+        location: $("#cart-location").value.trim(),
+        items: bag.map((l) => ({ id: l.id, size: l.size, qty: l.qty })),
+      };
+      if (!body.name || !body.phone || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(body.email)) {
+        hint.textContent = "Please add your name, phone and email.";
+        return;
+      }
+      hint.textContent = "";
+      payBtn.disabled = true;
+      payBtn.textContent = "Opening secure checkout…";
+      try {
+        const resp = await fetch(data.checkoutUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-CSRFToken": data.csrf },
+          body: JSON.stringify(body),
+          credentials: "same-origin",
+        });
+        const out = await resp.json().catch(() => ({}));
+        if (resp.ok && typeof out.url === "string" && out.url.indexOf("https://checkout.paystack.com/") === 0) {
+          window.location.href = out.url;
+          return;
+        }
+        hint.textContent = out.error || "Payment couldn't start. Please try again or use WhatsApp.";
+      } catch (e) {
+        hint.textContent = "Network problem. Please try again or use WhatsApp.";
+      }
+      payBtn.disabled = false;
+      payBtn.textContent = "Pay now · card or Mobile Money";
+    });
+  }
+
   render();
 })();

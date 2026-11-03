@@ -11,7 +11,7 @@
 <body>
 {% if current_user.is_authenticated %}
 <header class="top">
-  <a class="logo" href="{{ url_for('admin.home') }}">{{ site.store_name }} <span>Admin</span></a>
+  <a class="logo" href="{{ url_for('admin.home') }}">{{ site.store_name }} <span>{{ 'Support mode' if current_user.is_super else 'Admin' }}</span></a>
   <button class="burger" id="burger" type="button" aria-expanded="false" aria-controls="side">Menu</button>
 </header>
 <div class="layout">
@@ -22,9 +22,11 @@
     <a href="{{ url_for('admin.categories') }}" class="{{ 'on' if ep == 'admin.categories' }}">Categories</a>
     <a href="{{ url_for('admin.settings', group='brand') }}" class="{{ 'on' if ep.startswith('admin.settings') }}">Look &amp; content</a>
     <a href="{{ url_for('admin.faq') }}" class="{{ 'on' if ep == 'admin.faq' }}">FAQ</a>
+    <a href="{{ url_for('admin.orders') }}" class="{{ 'on' if ep == 'admin.orders' }}">Orders</a>
     <a href="{{ url_for('admin.enquiries') }}" class="{{ 'on' if ep == 'admin.enquiries' }}">Enquiries</a>
     <a href="{{ url_for('admin.activity') }}" class="{{ 'on' if ep == 'admin.activity' }}">Security log</a>
     <a href="{{ url_for('auth.account') }}" class="{{ 'on' if ep == 'auth.account' }}">Account</a>
+    {% if current_user.is_super %}<a href="{{ url_for('admin.support') }}" class="support-link {{ 'on' if ep == 'admin.support' }}">Support tools</a>{% endif %}
     <a href="{{ url_for('public.home') }}" target="_blank" rel="noopener">View site ↗</a>
     <form method="post" action="{{ url_for('auth.logout') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
