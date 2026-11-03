@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site.title }}{% endblock %}</title>
+  <meta name="description" content="{{ site.seo_description }}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ site.title }}">
+  <meta property="og:description" content="{{ site.seo_description }}">
+  <meta property="og:url" content="{{ request.url_root }}">
+  {% if site.hero_image %}<meta property="og:image" content="{{ request.url_root.rstrip('/') }}{{ site.hero_image }}">{% endif %}
+  <meta name="theme-color" content="{{ site.color_bg }}">
+  {% if site.favicon %}<link rel="icon" href="{{ site.favicon }}">{% endif %}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="{{ site.fonts_url }}">
+  <style nonce="{{ csp_nonce }}">
+    :root {
+      --primary: {{ site.color_primary }};
+      --accent: {{ site.color_accent }};
+      --bg: {{ site.color_bg }};
+      --surface: {{ site.color_surface }};
+      --text: {{ site.color_text }};
+      --font-head: "{{ site.fonts[0] }}", Georgia, serif;
+      --font-body: "{{ site.fonts[1] }}", system-ui, -apple-system, sans-serif;
+    }
+  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+</head>
+<body>
+{% block body %}{% endblock %}
+</body>
+</html>

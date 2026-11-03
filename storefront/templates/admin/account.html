@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% block title %}Account{% endblock %}
+{% block content %}
+<h1>Account</h1>
+<form class="card narrow" method="post">
+  <p>Signed in as <strong>{{ current_user.username }}</strong>.</p>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Current password <input name="current" type="password" required autocomplete="current-password"></label>
+  <label>New password <input name="new" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+  <label>Repeat new password <input name="confirm" type="password" required minlength="10" maxlength="128" autocomplete="new-password"></label>
+  <p class="muted small">At least 10 characters. A short sentence is easy to remember and hard to guess.</p>
+  <button class="btn" type="submit">Change password</button>
+</form>
+{% endblock %}

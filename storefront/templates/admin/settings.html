@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+{% block title %}Look & content{% endblock %}
+{% block content %}
+<h1>Look &amp; content</h1>
+<nav class="tabs">
+  {% for key, gtitle, _ in groups %}<a href="{{ url_for('admin.settings', group=key) }}" class="{{ 'on' if key == group }}">{{ gtitle }}</a>{% endfor %}
+</nav>
+<form class="card" method="post" enctype="multipart/form-data">
+  <h2>{{ title }}</h2>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for f in fields %}
+    {% set value = site.raw(f.key) %}
+    {% if f.kind == 'bool' %}
+      <label class="check"><input type="checkbox" name="{{ f.key }}" value="1" {{ 'checked' if value == '1' }}> {{ f.label }}</label>
+    {% elif f.kind == 'textarea' %}
+      <label>{{ f.label }} <textarea name="{{ f.key }}" rows="5" maxlength="{{ f.max_len }}">{{ value }}</textarea></label>
+    {% elif f.kind == 'color' %}
+      <label class="color">{{ f.label }}
+        <span class="color-row"><input type="color" value="{{ value }}" data-sync="{{ f.key }}" aria-label="{{ f.label }} picker"><input name="{{ f.key }}" id="{{ f.key }}" value="{{ value }}" pattern="#[0-9a-fA-F]{6}" maxlength="7" required></span>
+      </label>
+    {% elif f.kind == 'select' %}
+      <label>{{ f.label }}
+        <select name="{{ f.key }}">{% for k, v in f.choices.items() %}<option value="{{ k }}" {{ 'selected' if k == value }}>{{ v }}</option>{% endfor %}</select>
+      </label>
+    {% elif f.kind in ('image', 'video') %}
+      {% set url = site[f.key] %}
+      <div class="upload">
+        <p class="label">{{ f.label }}</p>
+        {% if url %}
+          {% if f.kind == 'image' %}<img class="preview" src="{{ url }}" alt="">{% else %}<video class="preview" src="{{ url }}" muted controls></video>{% endif %}
+          <label class="check"><input type="checkbox" name="remove_{{ f.key }}" value="1"> Remove</label>
+        {% endif %}
+        <input type="file" name="{{ f.key }}" accept="{{ 'video/mp4,video/webm' if f.kind == 'video' else 'image/jpeg,image/png,image/webp,image/gif' }}">
+      </div>
+    {% else %}
+      <label>{{ f.label }}
+        <input name="{{ f.key }}" value="{{ value }}" maxlength="{{ f.max_len }}"
+          {% if f.kind == 'email' %}type="email"{% elif f.kind == 'url' %}type="url" placeholder="https://"{% elif f.kind == 'phone' %}inputmode="tel"{% endif %}>
+      </label>
+    {% endif %}
+    {% if f.help %}<p class="help">{{ f.help }}</p>{% endif %}
+  {% endfor %}
+  <div class="actions"><button class="btn" type="submit">Save</button>
+    <a class="btn btn-ghost" href="{{ url_for('public.home') }}" target="_blank" rel="noopener">Preview site ↗</a></div>
+</form>
+{% endblock %}

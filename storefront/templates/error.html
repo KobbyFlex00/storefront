@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · {{ site.store_name }}{% endblock %}
+{% block body %}
+<main class="error-page">
+  <p class="eyebrow">{{ code }}</p>
+  <h1>{{ title }}</h1>
+  <a class="btn" href="{{ url_for('public.home') }}">Back to the shop</a>
+</main>
+{% endblock %}

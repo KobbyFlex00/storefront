@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% block title %}Categories{% endblock %}
+{% block content %}
+<h1>Categories</h1>
+<p class="muted">These become the filter tabs above your products (e.g. Dresses, Sets, Occasion).</p>
+{% for c in categories %}
+<div class="card row-form">
+  <form method="post" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ c.id }}">
+    <input name="name" value="{{ c.name }}" maxlength="60" required aria-label="Name">
+    <input name="position" type="number" value="{{ c.position }}" class="num" aria-label="Order">
+    <button class="btn btn-sm" name="action" value="save">Save</button>
+  </form>
+  <form method="post" data-confirm="Delete “{{ c.name }}”? Its products stay, without a category.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ c.id }}">
+    <button class="linkish danger" name="action" value="delete">Delete</button>
+  </form>
+</div>
+{% endfor %}
+<form class="card inline" method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input name="name" placeholder="New category name" maxlength="60" required aria-label="New category">
+  <button class="btn btn-sm" name="action" value="add">+ Add</button>
+</form>
+{% endblock %}

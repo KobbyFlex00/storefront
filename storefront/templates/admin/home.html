@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<h1>Welcome back</h1>
+<div class="stats">
+  <a class="stat" href="{{ url_for('admin.enquiries') }}"><span>{{ stats.new_enquiries }}</span>New enquiries</a>
+  <a class="stat" href="{{ url_for('admin.products') }}"><span>{{ stats.visible }}</span>Products live</a>
+  <a class="stat" href="{{ url_for('admin.products') }}"><span>{{ stats.products }}</span>Products total</a>
+  <a class="stat" href="{{ url_for('admin.categories') }}"><span>{{ stats.categories }}</span>Categories</a>
+</div>
+<div class="quick-links">
+  <a class="btn" href="{{ url_for('admin.product_edit') }}">+ Add a product</a>
+  <a class="btn btn-ghost" href="{{ url_for('admin.settings', group='brand') }}">Change colours &amp; logo</a>
+  <a class="btn btn-ghost" href="{{ url_for('admin.settings', group='hero') }}">Change the hero</a>
+</div>
+<h2>Latest enquiries</h2>
+{% if recent %}
+<ul class="list">
+  {% for e in recent %}
+  <li><strong>{{ e.name }}</strong> · {{ e.phone }} <span class="muted small">{{ e.created_at.strftime('%d %b %H:%M') }}</span>
+    <div class="pre">{{ e.items }}</div></li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted">No enquiries yet.</p>{% endif %}
+{% endblock %}

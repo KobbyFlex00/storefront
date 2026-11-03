@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% block title %}Enquiries{% endblock %}
+{% block content %}
+<h1>Enquiries</h1>
+<nav class="tabs">
+  <a href="{{ url_for('admin.enquiries', show='new') }}" class="{{ 'on' if show == 'new' }}">New</a>
+  <a href="{{ url_for('admin.enquiries', show='all') }}" class="{{ 'on' if show == 'all' }}">All</a>
+</nav>
+{% for e in enquiries %}
+<div class="card enq {{ 'done' if e.handled }}">
+  <div class="head-row">
+    <strong>{{ e.name }}</strong>
+    <span class="muted small">{{ e.created_at.strftime('%d %b %Y, %H:%M') }} UTC</span>
+  </div>
+  <p class="small">
+    {{ e.phone }}{% if e.email %} · {{ e.email }}{% endif %}{% if e.location %} · {{ e.location }}{% endif %}
+  </p>
+  <div class="pre">{{ e.items }}</div>
+  <div class="actions">
+    {% set digits = e.phone|select('in', '0123456789')|join %}
+    {% if digits %}<a class="btn btn-sm btn-wa" href="https://wa.me/{{ digits }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>{% endif %}
+    <form method="post" action="{{ url_for('admin.enquiry_update', eid=e.id, show=show) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-sm btn-ghost" name="action" value="toggle">{{ 'Mark as new' if e.handled else 'Mark handled' }}</button>
+    </form>
+    <form method="post" action="{{ url_for('admin.enquiry_update', eid=e.id, show=show) }}" data-confirm="Delete this enquiry?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="linkish danger" name="action" value="delete">Delete</button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="muted">Nothing here.</p>
+{% endfor %}
+{% endblock %}
